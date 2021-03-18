@@ -36,12 +36,14 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    colorCtrl = ColorChangeController();
+    colorCtrl = ColorChangeController(color: color);
     colorCtrl.addListener(() {
-      setState(() {
-        value = (colorCtrl.value * 100).round();
-        // color = colorCtrl.;
-      });
+      if (mounted) {
+        setState(() {
+          value = (colorCtrl.value * 100).round();
+          color = colorCtrl.color;
+        });
+      }
     });
   }
 
@@ -67,19 +69,27 @@ class _HomeState extends State<Home> {
               Container(
                 height: 64,
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: LinearProgressIndicator(value: value.toDouble() / 100),
+                color: color.withOpacity(.3),
+                child: LinearProgressIndicator(
+                  value: value.toDouble() / 100,
+                  valueColor: AlwaysStoppedAnimation(color),
+                ),
               ),
               SizedBox(height: 20),
               Text(
-                value == 100 ? 'done' : '$value %',
-                style: TextStyle(color: Colors.black),
+                value == 100 ? 'Done' : '$value %',
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
               ),
               SizedBox(height: 20),
               FlatButton(
                 child: Text(
                   'Change color',
                 ),
-                color: Colors.blue,
+                color: color,
                 onPressed: colorCtrl.changeColor,
               ),
             ],
@@ -129,8 +139,6 @@ class _ColorChangerState extends State<ColorChanger>
   @override
   void dispose() {
     _animationController.dispose();
-    // should be called not here but where we instantiate it
-    // widget.controller.dispose();
     super.dispose();
   }
 
@@ -145,7 +153,9 @@ class _ColorChangerState extends State<ColorChanger>
     _animationController.forward();
 
     colorAnimation.addListener(() {
+      widget.controller.color = colorAnimation.value;
       widget.controller.setValue(_animationController.value);
+
       if (colorAnimation.isCompleted) {
         widget.controller.isAnimating = false;
       }
@@ -177,6 +187,9 @@ class ColorChangeController extends ChangeNotifier {
   double value = 0.0;
   bool isAnimating = false;
   bool shouldStartAnimation = false;
+  Color color;
+
+  ColorChangeController({@required this.color});
 
   void setValue(double value) {
     this.value = value;
