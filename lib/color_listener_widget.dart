@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import 'color_change_controller.dart';
@@ -18,68 +16,68 @@ class ColorListenerWidget extends StatefulWidget {
 class _ColorChangerState extends State<ColorListenerWidget>
     with SingleTickerProviderStateMixin {
   AnimationController _animationController;
-  Color currentColor;
-  Animation<Color> colorAnimation;
+  Animation<Color> _colorAnimation;
 
   @override
   void initState() {
     super.initState();
-    currentColor = _getRandomColor();
     _animationController = AnimationController(
       value: 1,
       duration: Duration(seconds: 1),
       vsync: this,
     );
-    widget.controller.addListener(() {
-      if (widget.controller.shouldStartAnimation &&
-          !widget.controller.isAnimating) {
-        _startAnimation();
+
+    _colorAnimation = widget.controller.tween.animate(_animationController);
+    _colorAnimation.addListener(_animationListener);
+
+    widget.controller.addListener(_colorChangeListener);
+  }
+
+  void _colorChangeListener() {
+    if (widget.controller.shouldStartAnimation) {
+      if (widget.controller.isAnimating) {
+        _finishAnimation();
       }
-    });
-    colorAnimation = ColorTween(begin: currentColor, end: currentColor)
-        .animate(_animationController);
+      // preset animation object
+      _colorAnimation = widget.controller.tween.animate(_animationController);
+      _colorAnimation.addListener(_animationListener);
+      // start animation
+      widget.controller.onStart();
+      _animationController.reset();
+      _animationController.forward();
+    }
+  }
+
+  void _animationListener() {
+    widget.controller.onTick(_animationController.value, _colorAnimation.value);
+    if (_animationController.isCompleted) {
+      _finishAnimation();
+    }
+  }
+
+  void _finishAnimation() {
+    widget.controller.onFinish();
+    _colorAnimation.removeListener(_animationListener);
   }
 
   @override
   void dispose() {
+    _colorAnimation.removeListener(_animationListener);
     _animationController.dispose();
     super.dispose();
   }
 
-  void _startAnimation() {
-    Color nextColor = _getRandomColor();
-    colorAnimation = ColorTween(begin: currentColor, end: nextColor)
-        .animate(_animationController);
-    widget.controller.isAnimating = true;
-    widget.controller.shouldStartAnimation = false;
-
-    _animationController.reset();
-    _animationController.forward();
-
-    colorAnimation.addListener(() {
-      widget.controller.color = colorAnimation.value;
-      widget.controller.setValue(_animationController.value);
-
-      if (colorAnimation.isCompleted) {
-        widget.controller.isAnimating = false;
-      }
-    });
-  }
-
-  Color _getRandomColor() =>
-      Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: colorAnimation,
+      animation: _colorAnimation,
       builder: (BuildContext context, Widget widget) {
         return Container(
-          height: 64,
-          width: 64,
+          height: 100,
+          width: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: colorAnimation == null ? currentColor : colorAnimation.value,
+            color: _colorAnimation.value,
           ),
         );
       },

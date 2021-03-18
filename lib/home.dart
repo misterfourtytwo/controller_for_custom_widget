@@ -12,25 +12,23 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   ColorChangeController colorCtrl;
-  int value = 0;
-  Color color = Colors.transparent;
+
+  void _colorChangeListener() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    colorCtrl = ColorChangeController(color: color);
-    colorCtrl.addListener(() {
-      if (mounted) {
-        setState(() {
-          value = (colorCtrl.value * 100).round();
-          color = colorCtrl.color;
-        });
-      }
-    });
+    colorCtrl = ColorChangeController(initialColor: Colors.red);
+    colorCtrl.addListener(_colorChangeListener);
   }
 
   @override
   void dispose() {
+    colorCtrl.removeListener(_colorChangeListener);
     colorCtrl.dispose();
     super.dispose();
   }
@@ -51,17 +49,19 @@ class _HomeState extends State<Home> {
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 20),
                 height: 64,
-                color: color.withOpacity(.3),
                 child: LinearProgressIndicator(
-                  value: value.toDouble() / 100,
-                  valueColor: AlwaysStoppedAnimation(color),
+                  value: colorCtrl.progress,
+                  valueColor: AlwaysStoppedAnimation(colorCtrl.value),
+                  backgroundColor: colorCtrl.value.withOpacity(.3),
                 ),
               ),
               SizedBox(height: 20),
               Text(
-                value == 100 ? 'Done' : '$value %',
+                (1.0 - colorCtrl.progress < 1e-5)
+                    ? 'Done'
+                    : '${(colorCtrl.progress * 100).toInt()} %',
                 style: TextStyle(
-                  color: color,
+                  color: colorCtrl.value,
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
@@ -71,8 +71,8 @@ class _HomeState extends State<Home> {
                 child: Text(
                   'Change color',
                 ),
-                color: color.withOpacity(0.4),
-                onPressed: colorCtrl.changeColor,
+                color: colorCtrl.value.withOpacity(0.4),
+                onPressed: colorCtrl.animate,
               ),
             ],
           ),
