@@ -49,8 +49,8 @@ class _HomeState extends State<Home> {
               ),
               SizedBox(height: 20),
               Container(
+                margin: EdgeInsets.symmetric(horizontal: 20),
                 height: 64,
-                padding: EdgeInsets.symmetric(horizontal: 20),
                 color: color.withOpacity(.3),
                 child: LinearProgressIndicator(
                   value: value.toDouble() / 100,
@@ -71,7 +71,7 @@ class _HomeState extends State<Home> {
                 child: Text(
                   'Change color',
                 ),
-                color: color,
+                color: color.withOpacity(0.4),
                 onPressed: colorCtrl.changeColor,
               ),
             ],
